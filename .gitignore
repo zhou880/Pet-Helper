@@ -1,7 +1,0 @@
-/bin
-/etc
-/https/
-/lib
-/share
-*.cfg
-.DS_STORE   
