@@ -1,0 +1,26 @@
+<annotation>
+	<folder>test</folder>
+	<filename>IMG_7439.jpg</filename>
+	<path>/Users/tzhou1/Documents/Projects/Pet-Helper/Project-Files/models-master/research/object_detection/images/test/IMG_7439.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>4032</width>
+		<height>3024</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>Coco</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>784</xmin>
+			<ymin>388</ymin>
+			<xmax>3208</xmax>
+			<ymax>2960</ymax>
+		</bndbox>
+	</object>
+</annotation>

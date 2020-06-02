@@ -150,7 +150,3 @@ with detection_graph.as_default():
       if cv2.waitKey(25) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
         break
-
-      cv2.waitKey(1000)
-      if cv2.waitKey(1) == ord('q'):
-            break

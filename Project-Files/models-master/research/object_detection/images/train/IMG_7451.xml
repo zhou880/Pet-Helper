@@ -1,0 +1,26 @@
+<annotation>
+	<folder>train</folder>
+	<filename>IMG_7451.jpg</filename>
+	<path>/Users/tzhou1/Documents/Projects/Pet-Helper/Project-Files/models-master/research/object_detection/images/train/IMG_7451.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>4032</width>
+		<height>3024</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>Coco</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>484</xmin>
+			<ymin>8</ymin>
+			<xmax>3028</xmax>
+			<ymax>2192</ymax>
+		</bndbox>
+	</object>
+</annotation>

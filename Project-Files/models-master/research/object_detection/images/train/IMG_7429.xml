@@ -1,0 +1,26 @@
+<annotation>
+	<folder>train</folder>
+	<filename>IMG_7429.jpg</filename>
+	<path>/Users/tzhou1/Documents/Projects/Pet-Helper/Project-Files/models-master/research/object_detection/images/train/IMG_7429.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>4032</width>
+		<height>3024</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>Coco</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>1992</xmin>
+			<ymin>904</ymin>
+			<xmax>2760</xmax>
+			<ymax>1848</ymax>
+		</bndbox>
+	</object>
+</annotation>
