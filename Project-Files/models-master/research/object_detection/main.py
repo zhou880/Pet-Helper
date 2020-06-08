@@ -24,6 +24,15 @@ sys.path.append("..")
 from database import *
 
 def coco_detector(detection_graph):
+    loc_input = int(input('Enter current location:\n1- Kitchen\n2- Back Door\n3- Front Door\n4- Living Room\n'))
+    locations = {1: "Kitchen", 2: "Back Door", 3: "Front Door", 4: "Living Room"}
+    try:
+      location = locations[loc_input]
+    except:
+      print("Invalid location")
+      print("Exiting Program")
+      sys.exit()
+    
     cap = cv2.VideoCapture(0) 
     with detection_graph.as_default():
       with tf.Session(graph=detection_graph) as sess:
@@ -32,14 +41,12 @@ def coco_detector(detection_graph):
         #Time zone calculation
         HERE = tz.tzlocal()
         UTC = tz.gettz('UTC')
-
+        #Boolean declarations
         initialization = False
         last_detected_local = 'Not detected'
         diff = 0
         detected = False
         while True:
-
-      
           ret, image_np = cap.read()
           # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
           image_np_expanded = np.expand_dims(image_np, axis=0)
@@ -76,7 +83,7 @@ def coco_detector(detection_graph):
                   action = 'INSERT INTO record ' \
                           '(location, duration_detected, item_detected, time_recognized_utc, time_recognized_local) '\
                             'VALUES(%s, %s, %s, %s, %s);'
-                  params = ('car', diff, 'person', last_detected_utc, last_detected_local)
+                  params = (location, diff, 'person', last_detected_utc, last_detected_local)
                   db.query(action, params)
                   print('Successfully written to databse!')
                 except Exception as e:
