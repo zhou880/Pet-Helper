@@ -15,13 +15,28 @@ import cv2
 
 from utils import label_map_util
 from utils import visualization_utils as vis_util
+
+from datetime import datetime
+from dateutil import tz
+import time
 sys.path.append("..")
 
+from database import *
 
-def coco_detector(detection_graph, count):
-    cap = cv2.VideoCapture(1) 
+def coco_detector(detection_graph):
+    cap = cv2.VideoCapture(0) 
     with detection_graph.as_default():
       with tf.Session(graph=detection_graph) as sess:
+        #Initialize database
+        db = Database()
+        #Time zone calculation
+        HERE = tz.tzlocal()
+        UTC = tz.gettz('UTC')
+
+        initialization = False
+        last_detected_local = 'Not detected'
+        diff = 0
+        detected = False
         while True:
 
       
@@ -43,17 +58,47 @@ def coco_detector(detection_graph, count):
               feed_dict={image_tensor: image_np_expanded})
           
 
-          # Label map maps 1 to person. Person must be the main content of the video capture. Prediction accuracy must be greater than 75%.
-          if classes[0][0] == 1 and scores[0][0] > 0.75:
-              count = count + 1
-              print("Current count {}".format(count))
-          else:
-              count = 0
-
-          # Do something if object detected for more than 35 frames
-          if count > 35:
-            print('Detected for 35 frames, do something')
+          #Initialize current time for first iteration
+          if not initialization:
+            if last_detected_local == 'Not detected':
+              currTime = time.time()
+              initialization = True
           
+          # Label map maps 1 to person. Person must be the main content of the video capture. Prediction accuracy must be greater than 75%.
+          # Calculate time in the frame
+          if classes[0][0] == 1 and scores[0][0] > 0.50:
+              diff = round(time.time() - currTime, 3)
+              #print("Time detected {}".format(diff))
+          else:
+              # If already detected, write to the database for how long object has been detected
+              if detected:
+                try:
+                  action = 'INSERT INTO record ' \
+                          '(location, duration_detected, item_detected, time_recognized_utc, time_recognized_local) '\
+                            'VALUES(%s, %s, %s, %s, %s);'
+                  params = ('car', diff, 'person', last_detected_utc, last_detected_local)
+                  db.query(action, params)
+                  print('Successfully written to databse!')
+                except Exception as e:
+                  print(e)
+                  print('Failed to write to database')
+                  #do something about it
+
+              # Reset times for the next search
+              currTime = time.time()
+              diff = 0
+              detected = False
+
+          # Do something if object detected for more than 10 seconds
+          if diff > 10:
+            if not detected:
+                last_detected_utc = datetime.utcnow()
+                last_detected_local = last_detected_utc.replace(tzinfo=UTC).astimezone(HERE).strftime('%Y-%m-%d %H:%M:%SZ')
+                print('Detected for 10 seconds, do something')
+                
+                
+                detected = True
+              
           
           # Visualization of the results of a detection.
           vis_util.visualize_boxes_and_labels_on_image_array(
@@ -69,8 +114,13 @@ def coco_detector(detection_graph, count):
           fps = cap.get(cv2.CAP_PROP_FPS)
 
           # Draw FPS
-          cv2.putText(image_np,"FPS: {0:.2f}".format(fps),(30,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,0),2,cv2.LINE_AA)
+          cv2.putText(image_np,"FPS: {0:.2f}".format(fps),(10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,0),4,cv2.LINE_AA)
 
+          # Draw seen data
+          cv2.putText(image_np,'Detected for: ' + str(diff) + ' seconds',(10,100),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,0),4,cv2.LINE_AA)
+          cv2.putText(image_np,'Last recognized: ' + str(last_detected_local),(10,150),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,0),4,cv2.LINE_AA)
+
+          #Draw frame
           cv2.imshow('object detection', cv2.resize(image_np, (800,600)))
           if cv2.waitKey(25) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
@@ -97,7 +147,7 @@ if __name__ == '__main__':
 
     NUM_CLASSES = 90
 
-
+    '''
     #Loading model into memory
     opener = urllib.request.URLopener()
     opener.retrieve(DOWNLOAD_BASE + MODEL_FILE, MODEL_FILE)
@@ -106,7 +156,7 @@ if __name__ == '__main__':
       file_name = os.path.basename(file.name)
       if 'frozen_inference_graph.pb' in file_name:
         tar_file.extract(file, os.getcwd())
-
+    '''
     detection_graph = tf.Graph()
     with detection_graph.as_default():
       od_graph_def = tf.GraphDef()
@@ -120,5 +170,4 @@ if __name__ == '__main__':
     categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
     category_index = label_map_util.create_category_index(categories)
 
-    
-    coco_detector(detection_graph, 0)
+    coco_detector(detection_graph)

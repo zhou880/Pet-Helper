@@ -10,14 +10,22 @@ class Database:
             password = PASSWORD,
             port = PORT
         )
-    def query(self, action):
+    def query(self, action, params):
+        print(action)
+        cur = (self.connection).cursor()
+        cur.execute(action, params)
+        (self.connection).commit()
+        cur.close()
+        (self.connection).close()
+    def check(self, action):
         cur = (self.connection).cursor()
         cur.execute(action)
         rows = cur.fetchall()
-        print(rows)
+        for row in rows:
+            print(row)
         (self.connection).close()
 
 if __name__ == '__main__':
     db = Database()
-    action = "SELECT first_name FROM actor LIMIT 10"
-    db.query(action)
+    action = "SELECT * FROM record"
+    db.check(action)
