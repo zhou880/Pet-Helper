@@ -25,7 +25,10 @@ from picamera import PiCamera
 from picamera.array import PiRGBArray
 
 from database import *
+from messages import *
 
+TIME_THRESHOLD = 5 #seconds of detection before action taken
+message_confirmation = False
 def coco_detector(detection_graph):
     loc_input = int(input('Enter current location:\n1- Kitchen\n2- Back Door\n3- Front Door\n4- Living Room\n'))
     locations = {1: "Kitchen", 2: "Back Door", 3: "Front Door", 4: "Living Room"}
@@ -84,9 +87,9 @@ def coco_detector(detection_graph):
               currTime = time.time()
               initialization = True
           
-          # Label map maps 1 to person. Person must be the main content of the video capture. Prediction accuracy must be greater than 75%.
+          # Label map maps 18 to dog and 88 to teddy bear(Coco matches to both). Object must be the main content of the video capture. Prediction accuracy must be greater than 75%.
           # Calculate time in the frame
-          if classes[0][0] == 1 and scores[0][0] > 0.50:
+          if (classes[0][0] == 18 or classes[0][0] == 88) and scores[0][0] > 0.50:
               diff = round(time.time() - currTime, 3)
               #print("Time detected {}".format(diff))
           else:
@@ -94,9 +97,9 @@ def coco_detector(detection_graph):
               if detected:
                 try:
                   action = 'INSERT INTO record ' \
-                          '(location, duration_detected, item_detected, time_recognized_utc, time_recognized_local) '\
-                            'VALUES(%s, %s, %s, %s, %s);'
-                  params = (location, diff, 'person', last_detected_utc, last_detected_local)
+                          '(location, duration_detected, item_detected, time_recognized_utc, time_recognized_local, message_sent) '\
+                            'VALUES(%s, %s, %s, %s, %s, %s);'
+                  params = (location, diff, 'dog', last_detected_utc, last_detected_local, message_confirmation)
                   db.query(action, params)
                   print('Successfully written to databse!')
                 except Exception as e:
@@ -110,13 +113,18 @@ def coco_detector(detection_graph):
               detected = False
 
           # Do something if object detected for more than 10 seconds
-          if diff > 10:
+          if diff >TIME_THRESHOLD:
             if not detected:
                 last_detected_utc = datetime.utcnow()
                 last_detected_local = last_detected_utc.replace(tzinfo=UTC).astimezone(HERE).strftime('%Y-%m-%d %H:%M:%SZ')
                 print('Detected for 10 seconds, do something')
-                
-                
+                try:
+                  sendMessage('Coco requires attention!!')
+                  print("Message sent")
+                  message_confirmation = True
+                except:
+                  print("Message failed")
+                  message_confirmation = False
                 detected = True
               
           # Visualization of the results of a detection.

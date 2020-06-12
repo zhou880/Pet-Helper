@@ -5,7 +5,7 @@ def sendMessage(message):
 
     message = client.messages \
         .create(
-            body='',
+            body=message,
             from_= SENDER,
             to= RECEIVER
         )
