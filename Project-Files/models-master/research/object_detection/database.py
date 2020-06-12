@@ -15,8 +15,8 @@ class Database:
         cur = (self.connection).cursor()
         cur.execute(action, params)
         (self.connection).commit()
-        cur.close()
-        (self.connection).close()
+        #cur.close()
+        #(self.connection).close()
     def check(self, action):
         cur = (self.connection).cursor()
         cur.execute(action)
@@ -29,3 +29,4 @@ if __name__ == '__main__':
     db = Database()
     action = "SELECT * FROM record"
     db.check(action)
+

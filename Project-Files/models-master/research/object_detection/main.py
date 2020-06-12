@@ -12,14 +12,17 @@ from matplotlib import pyplot as plt
 from PIL import Image
 
 import cv2
-
+sys.path.append("..")
 from utils import label_map_util
 from utils import visualization_utils as vis_util
 
 from datetime import datetime
 from dateutil import tz
 import time
-sys.path.append("..")
+
+#Raspberry Pi
+from picamera import PiCamera
+from picamera.array import PiRGBArray
 
 from database import *
 
@@ -32,8 +35,14 @@ def coco_detector(detection_graph):
       print("Invalid location")
       print("Exiting Program")
       sys.exit()
-    
-    cap = cv2.VideoCapture(0) 
+    '''PiCamera'''
+    cap = PiCamera()
+    cap.resolution = (800,600)
+    cap.framerate = 10
+    rawCapture = PiRGBArray(cap, size=(800,600))
+    rawCapture.truncate(0)
+    #FPS calculation
+    fps_start = time.time()
     with detection_graph.as_default():
       with tf.Session(graph=detection_graph) as sess:
         #Initialize database
@@ -46,10 +55,14 @@ def coco_detector(detection_graph):
         last_detected_local = 'Not detected'
         diff = 0
         detected = False
-        while True:
-          ret, image_np = cap.read()
+        #while True:
+        for frame1 in cap.capture_continuous(rawCapture, format = "bgr", use_video_port = True):
+          image_np = frame1.array
+          #image_np.setflags(write=1) gives error, fix by making a copy
+          image_copy = np.copy(image_np)
+
           # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-          image_np_expanded = np.expand_dims(image_np, axis=0)
+          image_np_expanded = np.expand_dims(image_copy, axis=0)
           image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
           # Each box represents a part of the image where a particular object was detected.
           boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
@@ -106,10 +119,9 @@ def coco_detector(detection_graph):
                 
                 detected = True
               
-          
           # Visualization of the results of a detection.
           vis_util.visualize_boxes_and_labels_on_image_array(
-              image_np,
+              image_copy,
               np.squeeze(boxes),
               np.squeeze(classes).astype(np.int32),
               np.squeeze(scores),
@@ -117,21 +129,23 @@ def coco_detector(detection_graph):
               use_normalized_coordinates=True,
               line_thickness=8)
 
-
-          fps = cap.get(cv2.CAP_PROP_FPS)
+          fps_end = time.time()
+          fps = int(1/(fps_end - fps_start))
+          fps_start = time.time()
 
           # Draw FPS
-          cv2.putText(image_np,"FPS: {0:.2f}".format(fps),(10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,0),4,cv2.LINE_AA)
+          cv2.putText(image_copy,"FPS: {0:.2f}".format(fps),(10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,0),4,cv2.LINE_AA)
 
           # Draw seen data
-          cv2.putText(image_np,'Detected for: ' + str(diff) + ' seconds',(10,100),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,0),4,cv2.LINE_AA)
-          cv2.putText(image_np,'Last recognized: ' + str(last_detected_local),(10,150),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,0),4,cv2.LINE_AA)
+          cv2.putText(image_copy,'Detected for: ' + str(diff) + ' seconds',(10,100),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,0),4,cv2.LINE_AA)
+          cv2.putText(image_copy,'Last recognized: ' + str(last_detected_local),(10,150),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,0),4,cv2.LINE_AA)
 
           #Draw frame
-          cv2.imshow('object detection', cv2.resize(image_np, (800,600)))
+          cv2.imshow('object detection', cv2.resize(image_copy, (800,600)))
           if cv2.waitKey(25) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             break
+          rawCapture.truncate(0)
 
 
 
