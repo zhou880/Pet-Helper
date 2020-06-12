@@ -25,6 +25,6 @@
 - [x] Trained model for Coco
 - [x] Integrate Twilio API for customized alerts
 - [x] Write to database
-- [ ] Migrate to Raspberry Pi
+- [x] Migrate to Raspberry Pi
 - [ ] Data Analysis 
 - [ ] Live surveillance
